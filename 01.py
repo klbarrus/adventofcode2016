@@ -56,6 +56,7 @@ with (open(sys.argv[1])) as f:
                 bx -= blocks
             # print('stop at ({},{})'.format(bx, by))
             # print('')
+f.close()
 
 print('end at ({},{})'.format(bx, by))
 print('{} blocks away'.format(abs(bx)+abs(by)))
