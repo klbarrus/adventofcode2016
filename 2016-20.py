@@ -2,20 +2,10 @@
 # AdventOfCode 2016 Day 20
 
 import sys
-import copy
-
-
-def blocked(addr, fw):
-    rv = False
-    for i in fw:
-        if i[0] <= addr <= i[1]:
-            rv = True
-            break
-    return rv
 
 
 # read in firewall rules
-firewall = []
+rules = []
 with open(sys.argv[1]) as f:
     for line in f:
         line = line.rstrip()
@@ -23,52 +13,42 @@ with open(sys.argv[1]) as f:
             lo, hi = line.split('-')
             lo = int(lo)
             hi = int(hi)
-            firewall.append((lo, hi))
+            rules.append((lo, hi))
 f.close()
 
-firewall.sort()
-print('{} firewall rules'.format(len(firewall)))
+rules.sort()
+print('{} firewall rules'.format(len(rules)))
 
 # coalesce firewall rules
-new_firewall = []
-si = 0
-while si < len(firewall):
-    new_firewall = copy.deepcopy(firewall)
-    lo = firewall[si][0]
-    hi = firewall[si][1]
-    for j in range(si + 1, len(firewall)):
-        if firewall[j][0] <= hi + 1:
-            if hi < firewall[j][1]:
-                hi = firewall[j][1]
+new_rules = []
+while rules: 
+    curr_lo = rules[0][0]
+    curr_hi = rules[0][1]
+    j = 1
+    # look for overlap with first rule 
+    while j < len(rules):
+        next_lo = rules[j][0]
+        next_hi = rules[j][1]
+        if next_hi + 1 < curr_lo:   # next range entirely below
+            break
+        elif curr_hi + 1 < next_lo: # next range entirely above
+            break
         else:
-            del new_firewall[si:j]
-            new_firewall.insert(si, (lo, hi))
-            break
-        # max ipaddr reached, check remaining entries for overlap
-        if hi >= (2**32 - 1):
-            # these entries are ok
-            new_firewall = copy.deepcopy(firewall[0:j])
-            # check remaining entries for overlap, don't append if there is
-            for k in range(j, len(firewall)):
-                overlap = False
-                for p in range(0, j):
-                    if firewall[p][0] <= firewall[k][0] and firewall[k][1] <= firewall[p][1]:
-                        overlap = True
-                        break
-                if not overlap:
-                    new_firewall.append(firewall[k])
-            firewall = copy.deepcopy(new_firewall)
-            break
-    si += 1
-    firewall = copy.deepcopy(new_firewall)
+            curr_lo = min(curr_lo, next_lo)
+            curr_hi = max(curr_hi, next_hi)
+        j += 1
+    new_rules.append((curr_lo, curr_hi))
+    del rules[0:j]
 
-print('{} firewall rules after coalescing'.format(len(firewall)))
+print('{} firewall rules after coalescing'.format(len(new_rules)))
 print('')
-print('part 1: first address not blocked is {}'.format(firewall[0][1] + 1))
+print('part 1: first address not blocked is {}'.format(new_rules[0][1] + 1))
 
 total = 0
-for i in range(1, len(firewall)):
-    total += firewall[i][0] - firewall[i - 1][0] - 1
+for i in range(1, len(new_rules)):
+    total += new_rules[i][0] - new_rules[i-1][1] - 1
+# add addresses between top of firewall rules and max ipaddr
+total += (2**32 - 1) - new_rules[-1][1]
 
 print('part 2: {} total addresses not blocked'.format(total))
 
