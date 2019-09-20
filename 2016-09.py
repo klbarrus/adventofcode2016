@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # AdventOfCode 2016 09
 
 import sys
